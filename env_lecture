@@ -750,3 +750,76 @@ https://www.youtube.com/watch?v=Jr9i3Lgb5Qc&list=PLuHgQVnccGMB-iGMgONoRPArZfjRuR
         control();
         article();
         ...
+
+
+7.6 실전 Redux: 글생성 기능 구현
+
+    (main.html)
+        ...
+        function reducer(state, action){
+            if(state === undefined){
+                return {
+                    mode: "create",             // mode를 추가해서 read나 create 등에 따라 변하도록 만들자
+                    selected_id: null,
+                    contents:[
+                        {id:1, title:'HTML', desc:'HTML is ...'},
+                        {id:2, title:'CSS', desc:"CSS is ..."}
+                    ]
+                }
+            }
+            var newState;
+            if (action.type === 'SELECT'){
+                newState = Object.assign({}, state, {selected_id:action.id});
+            }
+            console.log(action, state, newState);
+            return newState;
+        }
+        ...
+
+
+    (main.html)
+        ...
+        function article(){
+            var state = store.getState();
+            if(state.mode === 'create'){
+                document.querySelector('#content').innerHTML=`
+                <article>
+                    <form onsubmit="
+                        event.preventDefault();     // form 안에 있는 name 값이 title인 tag의 값을 가져오자. 어떻게? this를 통해
+                        var _title = this.title.value;            // this(form) 내에 title이라는 이름을 가진 것(this.title)의 value를 가져오는것
+                        var _desc = this.desc.value;
+                        console.log(title);             // title 제대로 출력되는지 확인
+                    ">
+                        <p>
+                            <input type="text" name="title" placeholder="title" />
+                        </p>
+                        <p>
+                            <textarea name="desc" placeholder="description"></textarea>
+                        </p>
+                        <p>
+                            <input type="submit">
+                        </p>
+                    </form>
+                </article>
+                `;
+            } else if(state.mode === 'read'){
+                var i = 0;
+                var aTitle, aDesc;
+                while(i < state.contents.length){
+                    if(state.contents[i].id === state.selected_id){
+                        aTitle = state.contents[i].title;
+                        aDesc = state.contents[i].desc;
+                        break;
+                    }
+                    i = i + 1;
+                }
+                document.querySelector('#content').innerHTML=`
+                <article>
+                    <h2>${aTitle}</h2>
+                    ${aDesc}
+                </article>
+                `;
+            }
+            
+        }
+        ...
