@@ -446,3 +446,307 @@ https://www.youtube.com/watch?v=Jr9i3Lgb5Qc&list=PLuHgQVnccGMB-iGMgONoRPArZfjRuR
      댓글: - 참고로 저거 redux store 잡히는게 file:///C:/Users/USER/Desktop/Redux/with-redux.html 이런식으로 브라우저에서 열면 안잡히고 영상과 동일하게 local server올리고 거기서 html 파일 열어야 잡힙니다. 저같은 경우 web Server for Chrome 을 크롬 브라우저에 설치해서 실행 후 경로지정하고 열어서 잡았습니다.
             Web Server For Chrome 실행 -> 작은 창 뜨는데 거기에 있는 CHOOSE FOLDER 누르고 내 html 파일이 있는 폴더로 선택 -> Web Server URL이 적힌 것을 참고하고 URL/with-redux.html 실행   (ex: http://127.0.0.1:8887/with-redux.html)
            - 또는 npm 모듈인 http-server를 이용 하라고 함
+
+
+7.1 실전 Redux: 정적인 웹페이지 만들기
+    (main.html)
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+        </head>
+        <body>
+            <header>
+                <h1>WEB</h1>
+            </header>
+            <nav>
+                <ol>
+                    <li><a href="1.html">HTML</a></li>
+                    <li><a href="2.html">CSS</a></li>
+                </ol>
+            </nav>
+            <article>
+                <ul>
+                    <li><a href="/create">create</a></li>
+                    <li><input type="button" value="delete">delete</li>
+                </ul>
+                <h2>HTML</h2>
+                HTML is ...
+            </article>
+        </body>
+        </html>
+
+
+7.2 실전 Redux: 부품화
+
+    (main.html)
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+        </head>
+        <body>
+            <div id="subject"></div>
+            <div id="toc"></div>
+            <div id="control"></div>
+            <div id="content"></div>
+            <script>
+                function subject(){
+                    document.querySelector('#subject').innerHTML = `
+                    <header>
+                        <h1>WEB</h1>
+                        Hello, WEB!
+                    </header>
+                    `;
+                }
+
+                function TOC(){
+                    document.querySelector('#toc').innerHTML=`
+                    <nav>
+                        <ol>
+                            <li><a href="1.html">HTML</a></li>
+                            <li><a href="2.html">CSS</a></li>
+                        </ol>
+                    </nav>
+                    `;
+                }
+
+                function control(){
+                    document.querySelector('#control').innerHTML=`
+                    <ul>
+                        <li><a href="/create">create</a></li>
+                        <li><input type="button" value="delete">delete</li>
+                    </ul>
+                    `;
+                }
+
+                function article(){
+                    document.querySelector('#content').innerHTML=`
+                    <article>
+                        <h2>HTML</h2>
+                        HTML is ...
+                    </article>
+                    `;
+                }
+
+                subject();
+                TOC();
+                control();
+                article();
+            </script>
+        </body>
+        </html>
+
+
+7.3 실전 Redux: store 생성과 state 사용하기
+
+    (main.html)
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.1.0/redux.js"></script>
+        </head>
+        <body>
+            <script>
+                ...
+                function reducer(state, action){
+                    if(state === undefined){
+                        return {
+                            contents:[
+                                {id:1, title:'HTML', desc:'HTML is ...'},
+                                {id:2, title:'CSS', desc:"CSS is ..."}
+                            ]
+                        }
+                    }
+                    return
+                }
+                var store = Redux.createStore(reducer);
+                ...
+            </script>
+        </body>
+        </html>
+
+    이렇게 해주고 console에서 오류 뜨는지 확인, 그리고 getState로 확인 해보자
+    store.getState
+
+    function TOC에서 글목록을 store에 있는 정보를 바탕으로 가져와보자
+
+    (main.html)
+        ...
+        function TOC(){
+            var state = store.getState();
+            var i = 0;
+            var liTags = '';
+            while(i<state.contents.length){
+                liTags = liTags + `
+                    <li>
+                        <a href="${state.contents[i].id}">${state.contents[i].title}</a>
+                    </li>
+                `;
+                i = i + 1;
+            }
+            document.querySelector('#toc').innerHTML=`
+            <nav>
+                <ol>
+                    ${liTags}
+                </ol>
+            </nav>
+            `;
+        }
+        ...
+
+
+7.4 실전 Redux: action을 dispatch를 통해서 전달하기
+    글 목록을 클릭했을 때 action을 만들어서 해당 글의 상세 내용을 볼 수 있도록 해보자.
+
+    (main.html)
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.1.0/redux.js"></script>
+        </head>
+        <body>
+            <div id="subject"></div>
+            <div id="toc"></div>
+            <div id="control"></div>
+            <div id="content"></div>
+            <script>
+                function subject(){
+                    document.querySelector('#subject').innerHTML = `
+                    <header>
+                        <h1>WEB</h1>
+                        Hello, WEB!
+                    </header>
+                    `;
+                }
+
+                function TOC(){
+                    var state = store.getState();
+                    var i = 0;
+                    var liTags = '';
+                    while(i<state.contents.length){
+                        liTags = liTags + `
+                            <li>
+                                <a onclick="
+                                    event.preventDefault();             // a 태그의 기본적인 특징이 클릭시 다른 곳으로 이동, 우리는 해당 화면에 글이 나타나도록 원하니까 event.preventDefault(); 해줘야 함
+                                    var action = {type:'SELECT', id:${state.contents[i].id}}        // action 정의
+                                    store.dispatch(action);                                         // action을 받아서 dispatch ( dispatch가 reducer로 action을 보내준다.)
+                                "
+                                href="${state.contents[i].id}">${state.contents[i].title}</a>
+                            </li>
+                        `;
+                        i = i + 1;
+                    }
+                    document.querySelector('#toc').innerHTML=`
+                    <nav>
+                        <ol>
+                            ${liTags}
+                        </ol>
+                    </nav>
+                    `;
+                }
+
+                function control(){
+                    document.querySelector('#control').innerHTML=`
+                    <ul>
+                        <li><a href="/create">create</a></li>
+                        <li><input type="button" value="delete">delete</li>
+                    </ul>
+                    `;
+                }
+
+                function article(){
+                    document.querySelector('#content').innerHTML=`
+                    <article>
+                        <h2>HTML</h2>
+                        HTML is ...
+                    </article>
+                    `;
+                }
+                function reducer(state, action){
+                    if(state === undefined){
+                        return {
+                            selected_id:null,       // 현재 선택된 항목(tag)가 무엇인지를 알려주기 위해서 쓸 selected_id를 미리 설정해주자. default는 null로
+                            contents:[
+                                {id:1, title:'HTML', desc:'HTML is ...'},
+                                {id:2, title:'CSS', desc:"CSS is ..."}
+                            ]
+                        }
+                    }
+                    var newState;
+                    if (action.type === 'SELECT'){                                      // dispatch를 통해 넘어온 action의 값들에 따라서 logic 처리
+                        newState = Object.assign({}, state, {selected_id:action.id});   // dispatch를 통해 받은 action의 id를 selected_id로 설정해주고, state와 함께 복사해서 newState를 정의
+                    }
+                    console.log(action, state, newState);
+                    return newState;                                                    // newState를 새 state 값으로 반환
+                }
+                var store = Redux.createStore(reducer);
+                subject();
+                TOC();
+                control();
+                article();
+            </script>
+        </body>
+        </html>
+
+        이제 selected_id의 값이 변경됨에 따라 원하는 내용이 나오도록 해보자.
+
+
+7.5 실전 Redux: subscribe를 통해서 자동 갱신 되도록 처리
+    (main.html)
+        <script>
+        ...
+            function article(){
+                var state = store.getState();
+                var i = 0;
+                var aTitle, aDesc;
+                while(i < state.contents.length){
+                    if(state.contents[i].id === state.selected_id){
+                        aTitle = state.contents[i].title;
+                        aDesc = state.contents[i].desc;
+                        break;
+                    }
+                    i = i + 1;
+                }
+                document.querySelector('#content').innerHTML=`
+                <article>
+                    <h2>${aTitle}</h2>
+                    ${aDesc}
+                </article>
+                `;
+            }
+            function reducer(state, action){
+                if(state === undefined){
+                    return {
+                        selected_id: 2,
+                        contents:[
+                            {id:1, title:'HTML', desc:'HTML is ...'},
+                            {id:2, title:'CSS', desc:"CSS is ..."}
+                        ]
+                    }
+                }
+                var newState;
+                if (action.type === 'SELECT'){
+                    newState = Object.assign({}, state, {selected_id:action.id});
+                }
+                console.log(action, state, newState);
+                return newState;
+            }
+            var store = Redux.createStore(reducer);
+            subject();
+            TOC();
+            control();
+            article();
+        </script>
+
+    위와 같이 하고 reducer에 있는 selected_id를 1, 2 등으로 바꿔주면 화면 전환 확인 가능
+    아직 HTML이나 CSS 클릭해도 변화가 나타나지 않음
+    이제 state 값이 변할때 자동으로 반영될수 있도록 subscribe에 article 함수 등록
+
+    (main.html)
+        ...
+        var store = Redux.createStore(reducer);
+        store.subscribe(article);
+        subject();
+        TOC();
+        control();
+        article();
+        ...
