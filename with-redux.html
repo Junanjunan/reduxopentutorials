@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.1.0/redux.js"></script>
+    </head>
+    <body>
+        <style>
+            .container{
+                border: 5px solid black;
+                padding: 10px;
+            }
+        </style>
+        <div id="red"></div>
+        <div id="blue"></div>
+        <script>
+            function reducer(state, action){
+                console.log(state, action);
+                if(state === undefined){        // undefined: 아직 정의되지 않은 초기일 때, 즉 초기 state 값 설정
+                    return {color:'yellow'}
+                }
+                var newState;
+                if(action.type === 'CHANGE_COLOR'){
+                    newState = Object.assign({}, state, {color:action.color});
+                }
+                return newState;
+            }
+            var store = Redux.createStore(
+                reducer,
+                window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__());     // store라고 하는 전역변수에 저장이 되어서 application 어디서든지 실행할 수 있게 된다.
+            console.log(store.getState());              // getState로 state값을 불러와보자.(확인)
+
+            function red(){
+                var state = store.getState();
+                document.querySelector('#red').innerHTML = `
+                    <div class="container" id="component_red" style="background-color:${state.color}">
+                        <h1>red</h1>
+                        <input type="button" value="fire" onclick="
+                            store.dispatch({type:'CHANGE_COLOR', color:'red'});                   
+                        "/>
+                    </div>
+                `;          // dispatch를 호출할때 객체를 주는데, 그중 type이라는 property는 반드시 포함되어야 한다. 지금 원하는 store의 state값을 red로 바꾸는 것
+            }
+            store.subscribe(red); // action -> dispatch -> state 변경 될때 subscribe를 통해 red()가 동작하도록 등록
+            red();
+
+            function blue(){
+                var state = store.getState();
+                document.querySelector('#blue').innerHTML = `
+                    <div class="container" id="component_blue" style="background-color:${state.color}">
+                        <h1>blue</h1>
+                        <input type="button" value="fire" onclick="
+                            store.dispatch({type:'CHANGE_COLOR', color:'blue'});                   
+                        "/>
+                    </div>
+                `;          // dispatch를 호출할때 객체를 주는데, 그중 type이라는 property는 반드시 포함되어야 한다. 지금 원하는 store의 state값을 red로 바꾸는 것
+            }
+            store.subscribe(blue); // action -> dispatch -> state 변경 될때 subscribe를 통해 red()가 동작하도록 등록
+            blue();
+        </script>
+    </body>
+</html>

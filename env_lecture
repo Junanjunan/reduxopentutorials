@@ -1,0 +1,448 @@
+https://www.youtube.com/watch?v=Jr9i3Lgb5Qc&list=PLuHgQVnccGMB-iGMgONoRPArZfjRuRNVc
+
+1. 수업소개
+    
+    Redux : A predictable state container for JavaScript apps
+    
+    Redux는 application의 복잡성을 낮춰준다.
+
+    Redux의 특징 - Single Source of Truth 
+                - 하나의 상태(state)를 갖는다. (상태는 쉽게 생각해서 객체)
+                    - 하나의 객체 안에 application에서 필요한 모든 data를 넣어서 application의 복잡성을 낮춰준다. 중앙집중적 관리
+                - state는 중앙집중적이라 중요하기 때문에, 외부에서 직접 읽고 쓰는 것을 하지 못하도록 한다.
+                    - 특정함수만을 통해서 가능하도록: dispatcher를 통해 쓰고, reducer를 통해서 수정을 가하고, getState를 통해 데이터를 읽을 수 있다.
+                    - state라는 원본에 직접 변경을 가하지 않기때문에, Undo와 Redo에 매우 유용하다.
+                    - debugger를 통해서 과거시점의 상태까지 확인가능
+                    - 모듈 리로딩을 할 수 있다.
+                        - 코드를 작성하면 바로 application에 적용된다.
+                        - application은 refresh 되어도 data가 남아있도록 세팅 가능 (핫 모듈 리로딩 기능?)
+
+
+2.1 리덕스 여행의 지도: 소개
+    
+    create, delete를 html, redux를 통해 만들어볼 것이다.
+    
+    우선 동작과정을 이해하기 위한 그림을 한번 보자 - reduxmap.PNG 참조
+
+
+2.2 리덕스 여행의 지도: state와 render의 관계
+    
+    store: 정보가 저장되는 곳 (은행)
+    state: 정보가 저장되는 지점 (창고)
+    reducer: state에 접근하기 위해서 필요한 함수
+            ex) function reducer(oldState, action){
+                //...
+                }
+                var store = Redux.createStore(reducer);
+    dispatch, subscribe, getState : (일종의 은행 창구직원)
+    getState:
+            ex) function render(){
+                    var state = store.getState();
+                }
+    subscribe: 
+            - 값(state)이 변동 되었을 때 구됭되어야 할 함수를 등록해놓는 곳
+            - dispatch를 통해서 subscribe에 알려지면, 등록된 함수들 구동
+                
+    
+    
+    render: UI를 만들어주는 역할을 하는 직접 짜야 할 코드, state 값을 가져와서 UI를 만들어준다.
+                -> state 값이 변할때 render를 통해서 UI가 자동으로 바뀌면 편하다. 이를 가능하게 해주는 것이 subscribe
+                    -> render 함수를 subscribe에 등록하면, state 값이 바뀔때마다 render가 호출되면서 UI가 변경
+            ex1) function render(){
+                    var state = store.getState();
+                    //...
+                    document.querySelector('#app').innerHTML = '
+                        <h1>WEB</h1>
+                        ...
+                    '
+                    }
+
+            ex2) store.subscribe(render);
+
+
+2.3 리덕스 여행의 지도: action과 reducer
+    
+    dispatch:
+        - reducer를 호출해서 state의 값을 바꾸는 기능   
+            recuer를 호출할 때 두개의 값을 전달. 현재의 state 값과, action의 data -> 현재의 state에서 action을 받아서 reducer가 return하는 값이 새로운 state가 된다.
+                ex) function reducer(state, action){
+                    //...
+                    }
+     전체적인 과정: action이 오면, dispatch가 (reducer를 호출/subscribe에 알림), 
+                   reducer는 dispatch를 통해서 온 action의 data와 state를 통해서 반환하고자 하는 값을 정의해서 return,
+                   subscribe는 redner에 state가 바뀌는 것을 알리고, render는 getState를 통해서 바뀐 state값을 받아와서 UI가 변경된다.
+
+
+3. Redux가 좋은 가장 중요한 이유
+    중앙집중적 관리로, 간편하게 관리 가능
+    버전관리에 용이(기존 debugger는 현재 상태만 보여주는데, redux를 통하면 과거의 상태까지 볼 수 있다.)
+
+
+4. Redux가 없다면
+    (without-redux.html)
+        <html>
+            <body>
+                <style>
+                    .container{
+                        border: 5px solid black;
+                        padding: 10px;
+                    }
+                </style>
+                <div id="red"></div>
+                <div id="green"></div>
+                <div id="blue"></div>
+                <script>
+                    function red(){
+                        document.querySelector('#red').innerHTML = `
+                            <div class="container" id="component_red">
+                                <h1>red</h1>
+                                <input type="button" value="fire" onclick="
+                                    document.querySelector('#component_red').style.backgroundColor = 'red';
+                                    document.querySelector('#component_green').style.backgroundColor = 'red';
+                                    document.querySelector('#component_blue').style.backgroundColor = 'red';
+                                "/>
+                            </div>
+                        `;
+                    }
+                    red();
+                    
+                    function green(){
+                        document.querySelector('#green').innerHTML = `
+                            <div class="container" id="component_green">
+                                <h1>green</h1>
+                                <input type="button" value="fire" onclick="
+                                    document.querySelector('#component_green').style.backgroundColor = 'green';
+                                    document.querySelector('#component_red').style.backgroundColor = 'green';
+                                    document.querySelector('#component_blue').style.backgroundColor = 'green';
+                                "/>
+                            </div>
+                        `;
+                    }
+                    green();
+
+                    function blue(){
+                        document.querySelector('#blue').innerHTML = `
+                            <div class="container" id="component_blue">
+                                <h1>blue</h1>
+                                <input type="button" value="fire" onclick="
+                                    document.querySelector('#component_green').style.backgroundColor = 'blue';
+                                    document.querySelector('#component_red').style.backgroundColor = 'blue';
+                                    document.querySelector('#component_blue').style.backgroundColor = 'blue';
+                                "/>
+                            </div>
+                        `;
+                    }
+                    blue();
+                </script>
+            </body>
+        </html>
+
+    redux가 없는 경우라면, 항목을 하나씩 늘릴때마다 각각의 함수들에 일일히 추가해줘야 한다.
+
+
+# 5.1 Redux의 적용: store 생성
+
+    redux 설치: 
+        $ npm install --save redux
+        또는 redux를 설치하지 않고 쓸 수 있는 방법: redux cdn 구글에 검색 https://cdnjs.com/libraries/redux
+
+        https://cdnjs.cloudflare.com/ajax/libs/redux/4.1.0/redux.js 복사
+
+    (with-redux.html)
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.1.0/redux.js"></script>
+            </head>
+            <body>
+                <style>
+                    .container{
+                        border: 5px solid black;
+                        padding: 10px;
+                    }
+                </style>
+                <div id="red"></div>
+                <script>
+                    function reducer(state, action){    // 아래에서 createStore가 필수적으로 reducer를 받아야 하기 때문에 reducer 먼저 정의
+                        if(state === undefined){        // undefined: 아직 정의되지 않은 초기일 때, 즉 초기 state 값 설정
+                            return {color:'yellow'}
+                        }
+                    }
+                    var store = Redux.createStore(reducer);     // store라고 하는 전역변수에 저장이 되어서 application 어디서든지 실행할 수 있게 된다. 
+                    console.log(store.getState());              // getState로 state값을 불러와보자.(확인)
+
+                    function red(){
+                        document.querySelector('#red').innerHTML = `
+                            <div class="container" id="component_red">
+                                <h1>red</h1>
+                                <input type="button" value="fire" onclick="
+                                    document.querySelector('#component_red').style.backgroundColor = 'red';
+                                "/>
+                            </div>
+                        `;
+                    }
+                    red();
+                </script>
+            </body>
+        </html>
+
+    저장하고 console.log 보면 {color: "yellow"} 나타남
+
+    (width-redux.html)
+        ...
+        function red(){
+            var state = store.getState();                           //store에서 getState를 통해 불러와서
+            document.querySelector('#red').innerHTML = `                                              
+                <div class="container" id="component_red" style="background-color:${state.color}">      //기본값으로 설정
+                    <h1>red</h1>
+                    <input type="button" value="fire" onclick="
+                        document.querySelector('#component_red').style.backgroundColor = 'red';
+                    "/>
+                </div>
+            `;
+        }
+        ...
+
+
+# 5.2 Redux의 적용: reducer와 action을 이용해서 새로운 state 값 만들기
+
+    (with-redux.html)
+        ...
+        function red(){
+            var state = store.getState();
+            document.querySelector('#red').innerHTML = `
+                <div class="container" id="component_red" style="background-color:${state.color}">
+                    <h1>red</h1>
+                    <input type="button" value="fire" onclick="
+                        store.dispatch({type:'CHANGE_COLOR', color:'red'});        // dispatch를 호출할때 객체를 주는데, 그중 type이라는 property는 반드시 포함되어야 한다. 지금 원하는 store의 state값을 red로 바꾸는 것           
+                    "/>
+                </div>
+            `;          
+        }
+        ...
+
+    store의 dispatch를 불러준 후, state에도 코드를 작성하자
+    diaptch를 통해서 action을 제대로 전달받았는지 확인해보기 위해 function reducer에 console.log를 해보자
+
+    (with-redux.html)
+        ...
+        function reducer(state, action){
+            console.log(state, action);
+            if(state === undefined){        
+                return {color:'yellow'}
+            }
+        }
+        ...
+
+    console을 보면 처음에 아래와 같이 출력
+        undefined {type: "@@redux/INITk.x.d.7.a.3"} 
+            -> 기본적으로 한번 실행된 값 나옴
+    
+    fire를 클릭 후 console을 보면 다음과 같이 출력
+        ->{color: "yellow"} ->{type: "CHANGE_COLOR", color: "red"}
+            - {color: "yellow"}: state 값
+            - {type: "CHANGE_COLOR", color: "red"}: action의 값
+
+    (with-redux.html)
+        ...
+        function reducer(state, action){
+            console.log(state, action);
+            if(state === undefined){        
+                return {color:'yellow'}
+            }
+            return {color: 'red'}
+        }
+        ...
+
+    위와 같이 하고 fire를 클릭하면
+        state값이 {color:"red"}로 바뀐다. (console을 통해서도 나오고, 콘솔창에서 store.getState()를 해서 확인할 수도 있다.)
+
+
+    위를 다듬어보자
+
+    (with-redux.html)
+        <script>
+            function reducer(state, action){
+                console.log(state, action);
+                if(state === undefined){       
+                    return {color:'yellow'}
+                }
+                if(action.type === 'CHANGE_COLOR'){
+                    state.color = 'red';
+                }
+                return state;
+            }
+            var store = Redux.createStore(reducer);    
+            console.log(store.getState());             
+
+            function red(){
+                var state = store.getState();
+                document.querySelector('#red').innerHTML = `
+                    <div class="container" id="component_red" style="background-color:${state.color}">
+                        <h1>red</h1>
+                        <input type="button" value="fire" onclick="
+                            store.dispatch({type:'CHANGE_COLOR', color:'red'});                   
+                        "/>
+                    </div>
+                `;         
+            }
+            red();
+        </script>
+
+    이렇게 하면 되지만, REDO, UNDO 기능을 쉽게 잘 쓰기 위해서 state를 복사해주고 복사해준 값을 변경한 것을 return하는 것으로 코드를 작성하자 (+ 이렇게 해야 예측가능해지는 장점도 살릴 수 있다.)
+
+
+    ** 객체를 복제할 때는
+        Object.assign(); 이라는 명령 이용
+        OBject.assign({}, {복사할 객체1}, {복사할 객체2}, ...)
+            -> 처음에는 빈객체를, 그 다음부터는 빈객체에 복사할 객체를 준다.
+        ex) Object.assign({}, {name:'egoing'}, {city:'Seoul'});         (console.log에서 확인해보기)
+
+        이를 이용해서 redux의 state를 복사해서 표현해보자
+
+    (with-redux.html)
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.1.0/redux.js"></script>
+            </head>
+            <body>
+                <style>
+                    .container{
+                        border: 5px solid black;
+                        padding: 10px;
+                    }
+                </style>
+                <div id="red"></div>
+                <script>
+                    function reducer(state, action){
+                        console.log(state, action);
+                        if(state === undefined){        // undefined: 아직 정의되지 않은 초기일 때, 즉 초기 state 값 설정
+                            return {color:'yellow'}
+                        }
+                        var newState;
+                        if(action.type === 'CHANGE_COLOR'){
+                            newState = Object.assign({}, state, {color:action.color});
+                        }
+                        return newState;
+                    }
+                    var store = Redux.createStore(reducer);     // store라고 하는 전역변수에 저장이 되어서 application 어디서든지 실행할 수 있게 된다.
+                    console.log(store.getState());              // getState로 state값을 불러와보자.(확인)
+
+                    function red(){
+                        var state = store.getState();
+                        document.querySelector('#red').innerHTML = `
+                            <div class="container" id="component_red" style="background-color:${state.color}">
+                                <h1>red</h1>
+                                <input type="button" value="fire" onclick="
+                                    store.dispatch({type:'CHANGE_COLOR', color:'red'});                   
+                                "/>
+                            </div>
+                        `;          // dispatch를 호출할때 객체를 주는데, 그중 type이라는 property는 반드시 포함되어야 한다. 지금 원하는 store의 state값을 red로 바꾸는 것
+                    }
+                    red();
+                </script>
+            </body>
+        </html>
+
+
+5.3 Redux의 적용: state의 변화에 따라서 UI 반영하기
+    
+    subscribe에 red() 함수 등록
+    (with-redux.html)
+        function red(){
+            ...         
+        }
+        store.subscribe(red); // action -> dispatch -> state 변경 될때 subscribe를 통해 red()가 동작하도록 등록
+        red();
+
+    이제 위를 활용
+    (with-redux.html)
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.1.0/redux.js"></script>
+            </head>
+            <body>
+                <style>
+                    .container{
+                        border: 5px solid black;
+                        padding: 10px;
+                    }
+                </style>
+                <div id="red"></div>
+                <div id="blue"></div>
+                <script>
+                    function reducer(state, action){
+                        console.log(state, action);
+                        if(state === undefined){                // undefined: 아직 정의되지 않은 초기일 때, 즉 초기 state 값 설정
+                            return {color:'yellow'}
+                        }
+                        var newState;
+                        if(action.type === 'CHANGE_COLOR'){
+                            newState = Object.assign({}, state, {color:action.color});
+                        }
+                        return newState;
+                    }
+                    var store = Redux.createStore(reducer);     // store라고 하는 전역변수에 저장이 되어서 application 어디서든지 실행할 수 있게 된다.
+                    console.log(store.getState());              // getState로 state값을 불러와보자.(확인)
+
+                    function red(){
+                        var state = store.getState();
+                        document.querySelector('#red').innerHTML = `
+                            <div class="container" id="component_red" style="background-color:${state.color}">
+                                <h1>red</h1>
+                                <input type="button" value="fire" onclick="
+                                    store.dispatch({type:'CHANGE_COLOR', color:'red'});                   
+                                "/>
+                            </div>
+                        `;                          // dispatch를 호출할때 객체를 주는데, 그중 type이라는 property는 반드시 포함되어야 한다. 지금 원하는 store의 state값을 red로 바꾸는 것
+                    }
+                    store.subscribe(red);           // action -> dispatch -> state 변경 될때 subscribe를 통해 red()가 동작하도록 등록
+                    red();
+
+                    function blue(){
+                        var state = store.getState();
+                        document.querySelector('#blue').innerHTML = `
+                            <div class="container" id="component_blue" style="background-color:${state.color}">
+                                <h1>blue</h1>
+                                <input type="button" value="fire" onclick="
+                                    store.dispatch({type:'CHANGE_COLOR', color:'blue'});                   
+                                "/>
+                            </div>
+                        `;                          // dispatch를 호출할때 객체를 주는데, 그중 type이라는 property는 반드시 포함되어야 한다. 지금 원하는 store의 state값을 red로 바꾸는 것
+                    }
+                    store.subscribe(blue);          // action -> dispatch -> state 변경 될때 subscribe를 통해 red()가 동작하도록 등록
+                    blue();
+                </script>
+            </body>
+        </html>
+
+    이렇게 함으로써 redux를 쓰지 않고 작성했을때보다 항목들간에 coupling을 줄여줄 수 있었다.
+
+
+6. Redux 선물: 시간여행과 로깅
+
+    redux dev tools 이용해보자 https://github.com/zalmoxisus/redux-devtools-extension
+    구글링해서 다운, chrome 버전 다운
+
+    1.1 Basic store
+    For a basic Redux store simply add:
+
+    const store = createStore(
+    reducer, /* preloadedState, */
+    +  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()     -> 이 부분 추가
+    );
+
+    (with-redux.html)
+        ...
+        var store = Redux.createStore(
+            reducer,
+            window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__());  // 이렇게 추가
+        ...
+
+    그리고 F12(개발자 모드)를 켜주면 Elements등이 있는것에 끝에 Redux 실행
+    안됨
+     댓글: - 참고로 저거 redux store 잡히는게 file:///C:/Users/USER/Desktop/Redux/with-redux.html 이런식으로 브라우저에서 열면 안잡히고 영상과 동일하게 local server올리고 거기서 html 파일 열어야 잡힙니다. 저같은 경우 web Server for Chrome 을 크롬 브라우저에 설치해서 실행 후 경로지정하고 열어서 잡았습니다.
+            Web Server For Chrome 실행 -> 작은 창 뜨는데 거기에 있는 CHOOSE FOLDER 누르고 내 html 파일이 있는 폴더로 선택 -> Web Server URL이 적힌 것을 참고하고 URL/with-redux.html 실행   (ex: http://127.0.0.1:8887/with-redux.html)
+           - 또는 npm 모듈인 http-server를 이용 하라고 함
